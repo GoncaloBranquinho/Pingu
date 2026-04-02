@@ -1,5 +1,7 @@
-[workspace]
-members = [
-    "crates/pingu",
-]
-resolver = "2"
+[package]
+name = "pingu"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crossterm = "0.29.0"
