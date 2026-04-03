@@ -1,15 +1,22 @@
 use std::collections::HashMap;
 
+use std::io::stdout;
 use std::{
     io::{Result, Stdout},
     time::Duration,
 };
 
-use crossterm::event::{EnableBracketedPaste, EnableFocusChange, EnableMouseCapture, poll, read};
+use crossterm::cursor::{DisableBlinking, EnableBlinking, MoveTo, RestorePosition, SavePosition};
+use crossterm::event::{
+    DisableBracketedPaste, DisableFocusChange, DisableMouseCapture, EnableBracketedPaste,
+    EnableFocusChange, EnableMouseCapture, poll, read,
+};
 use crossterm::execute;
-use crossterm::terminal::enable_raw_mode;
+use crossterm::terminal::{
+    Clear, EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode, size,
+};
 
-use crate::core::{BufferKind, Cursor, Mode, Window};
+use crate::core::{BufferKind, Cursor, FileBuffer, Mode, Window};
 use crate::input::ModeHandler;
 use crate::render::Render;
 
@@ -24,10 +31,10 @@ pub struct Editor {
 impl Editor {
     pub fn new() -> Self {
         Self {
-            buffers: HashMap::new(), // TODO Initialize with default buffers
-            windows: HashMap::new(), // TODO Initialize with default windows
+            buffers: HashMap::new(),
+            windows: HashMap::new(),
             current_window: 1,
-            mode: Mode::Normal,
+            mode: Mode::Insert, // Should be Normal
         }
     }
 
@@ -42,14 +49,62 @@ impl Editor {
         }
     }
 
-    pub fn initialize(&self, stdout: &mut Stdout) -> Result<()> {
+    pub fn initialize_editor(&mut self) -> Result<()> {
+        let file_buffer = BufferKind::File(FileBuffer::new(("untitled").to_string()));
+        self.buffers.insert(1, file_buffer);
+        let (width, height) = size()?;
+        self.windows
+            .insert(1, Window::new(1, width, height, 0, 0, 0));
+        Ok(())
+    }
+
+    pub fn initialize_terminal(&self, stdout: &mut Stdout) -> Result<()> {
         enable_raw_mode()?;
         execute!(
             stdout,
+            EnterAlternateScreen,
             EnableBracketedPaste,
             EnableFocusChange,
-            EnableMouseCapture
+            EnableMouseCapture,
+            DisableBlinking,
+            SavePosition,
+            MoveTo(0, 0),
         )?;
         Ok(())
+    }
+
+    pub fn insert_char(&self, c: char) {
+        todo!()
+    }
+
+    pub fn insert_newline(&self) {
+        todo!()
+    }
+
+    pub fn delete_char(&self) {
+        todo!()
+    }
+}
+
+impl Default for Editor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for Editor {
+    fn drop(&mut self) {
+        let _ = disable_raw_mode();
+
+        let mut stdout = stdout();
+        let _ = execute!(
+            stdout,
+            EnableBlinking,
+            DisableMouseCapture,
+            DisableBracketedPaste,
+            DisableFocusChange,
+            RestorePosition,
+            LeaveAlternateScreen,
+        );
     }
 }

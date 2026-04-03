@@ -6,22 +6,15 @@ pub struct Window {
     pub cursor: Cursor,
     pub line_offset: usize,
     pub col_offset: usize,
-    pub width: usize,
-    pub height: usize,
+    pub width: u16,
+    pub height: u16,
     pub x: usize,
     pub y: usize,
     pub z: usize,
 }
 
 impl Window {
-    pub fn new(
-        buffer_id: usize,
-        width: usize,
-        height: usize,
-        x: usize,
-        y: usize,
-        z: usize,
-    ) -> Self {
+    pub fn new(buffer_id: usize, width: u16, height: u16, x: usize, y: usize, z: usize) -> Self {
         Window {
             buffer_id,
             cursor: Cursor::new(),

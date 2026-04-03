@@ -1,4 +1,4 @@
-use crossterm::event::Event;
+use crossterm::event::{Event, KeyCode};
 
 use crate::{core::Mode, editor::Editor};
 
@@ -22,7 +22,21 @@ impl ModeHandler {
 
     fn insert(editor: &mut Editor, event: Event) {
         match event {
-            Event::Key(key) => todo!(),
+            Event::Key(key) => match key.code {
+                KeyCode::Char(c) => {
+                    editor.insert_char(c);
+                }
+                KeyCode::Enter => {
+                    editor.insert_newline();
+                }
+                KeyCode::Backspace => {
+                    editor.delete_char();
+                }
+                KeyCode::Esc => {
+                    editor.mode = Mode::Normal;
+                }
+                _ => {}
+            },
             _ => todo!(),
         }
     }
