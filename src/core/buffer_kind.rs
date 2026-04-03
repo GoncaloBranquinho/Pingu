@@ -1,8 +1,8 @@
-use crate::core::Cell;
+use crate::core::{Cell, FileBuffer};
 
 #[derive(Debug)]
 pub enum BufferKind {
-    File,
+    File(FileBuffer),
     Ui,
 }
 
