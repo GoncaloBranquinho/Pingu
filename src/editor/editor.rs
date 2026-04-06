@@ -10,10 +10,10 @@ use crossterm::event::{
     DisableBracketedPaste, DisableFocusChange, DisableMouseCapture, EnableBracketedPaste,
     EnableFocusChange, EnableMouseCapture,
 };
-use crossterm::execute;
 use crossterm::terminal::{
     EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
+use crossterm::{execute, queue};
 
 use crate::commands::Command;
 use crate::core::{Buffer, FileBuffer, Mode, Window};
@@ -83,12 +83,18 @@ impl Editor {
         (buffer, window)
     }
 
-    pub fn execute(&mut self, command: Command) {
+    pub fn execute(&mut self, command: Command, stdout: &mut Stdout) {
         let (buffer, window) = self.get_pair(self.current_window);
         let (line, col) = window.buffer_cursor();
         match command {
             Command::ExitInsertMode => {
                 self.mode = Mode::Normal;
+                let _ = queue!(stdout, SetCursorStyle::SteadyBlock);
+            }
+
+            Command::EnterInsertMode => {
+                self.mode = Mode::Insert;
+                let _ = queue!(stdout, SetCursorStyle::SteadyBar);
             }
             _ => {
                 let (new_line, new_col) = buffer.execute(command, line, col);

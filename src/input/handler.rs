@@ -15,7 +15,10 @@ impl ModeHandler {
 
     fn normal(editor: &mut Editor, event: Event) -> Command {
         match event {
-            Event::Key(key) => todo!(),
+            Event::Key(key) => match key.code {
+                KeyCode::Char('i') => Command::EnterInsertMode,
+                _ => todo!(),
+            },
             _ => todo!(),
         }
     }

@@ -4,4 +4,5 @@ pub enum Command {
     NewLine,
     DeleteChar,
     ExitInsertMode,
+    EnterInsertMode,
 }

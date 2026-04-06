@@ -58,24 +58,28 @@ impl Window {
     // helper to get the start of the viewport on the buffer
     pub fn get_buffer_start(&self) -> (usize, usize) {
         let mut l = 0;
-        let mut r = self.lines_before.len() - 2;
+        let mut r = self.lines_before.len() - 1;
+        let mut mid = (l + r) / 2;
         while l <= r {
-            let mid = (l + r) / 2;
+            mid = (l + r) / 2;
+            // Is this case even possible to happen??
+            if mid == self.lines_before.len() - 1 {
+                break;
+            }
             if self.lines_before[mid] <= self.first_line_window
                 && self.first_line_window < self.lines_before[mid + 1]
             {
-                let wraps = self.first_line_window - self.lines_before[mid];
-                return (mid, wraps * self.width);
+                break;
             } else if self.first_line_window < self.lines_before[mid] {
                 r = mid - 1;
             } else {
                 l = mid + 1;
             }
         }
-        // if the start of the viewport happens to be the last buffer line, we handle it here in seperate
-        let last_line = self.lines_before.len() - 2;
-        let wrap = self.first_line_window - self.lines_before[last_line];
-        (last_line, wrap)
+        (
+            mid,
+            (self.first_line_window - self.lines_before[mid]) * self.width,
+        )
     }
 
     // updates the count of wrapped lines before each buffer line

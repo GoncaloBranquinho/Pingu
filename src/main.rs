@@ -20,7 +20,7 @@ fn main() -> io::Result<()> {
     loop {
         if poll(Duration::from_millis(500))? {
             let command = ModeHandler::handle(&mut editor, read()?);
-            editor.execute(command);
+            editor.execute(command, &mut stdout);
             renderer.render(&mut editor, &mut stdout)?;
             stdout.flush()?;
         } else {
