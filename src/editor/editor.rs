@@ -72,32 +72,30 @@ impl Editor {
         self.windows.get(&id).unwrap()
     }
 
-    pub fn get_window_as_mut(&mut self, id: usize) -> &mut Window {
-        self.windows.get_mut(&id).unwrap()
-    }
-
     pub fn get_buffer(&self, id: usize) -> &dyn Buffer {
         self.buffers.get(&id).unwrap().as_ref()
     }
 
-    pub fn get_buffer_as_mut(&mut self, id: usize) -> &mut dyn Buffer {
-        self.buffers.get_mut(&id).unwrap().as_mut()
+    pub fn get_pair(&mut self, id: usize) -> (&mut dyn Buffer, &mut Window) {
+        let window = self.windows.get_mut(&id).unwrap();
+        let buffer_id = window.buffer_id;
+        let buffer = self.buffers.get_mut(&buffer_id).unwrap().as_mut();
+        (buffer, window)
     }
 
     pub fn execute(&mut self, command: Command) {
-        let window = self.get_window(self.current_window);
-        let buffer_id = window.buffer_id;
+        let (buffer, window) = self.get_pair(self.current_window);
         let (line, col) = window.buffer_cursor();
         match command {
             Command::ExitInsertMode => {
                 self.mode = Mode::Normal;
             }
             _ => {
-                let (new_line, new_col) = self
-                    .get_buffer_as_mut(buffer_id)
-                    .execute(command, line, col);
-                let window = self.get_window_as_mut(self.current_window);
+                let (new_line, new_col) = buffer.execute(command, line, col);
                 window.cursor.set_cursor(new_line, new_col);
+                // if the terminal cursor goes out of bounds, update the first_line_buffer and
+                // first_line_window
+                window.update_lines_before(buffer);
             }
         }
     }

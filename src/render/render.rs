@@ -36,6 +36,7 @@ impl Render {
                     }
                 }
                 i += 1;
+                j = window.y;
             }
         }
         (0..self.old_screen.len()).for_each(|i| {
