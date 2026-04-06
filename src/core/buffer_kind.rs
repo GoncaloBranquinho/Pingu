@@ -1,27 +1,9 @@
-use crate::core::{Cell, FileBuffer};
+use crate::{commands::Command, core::Cell};
+use std::fmt::Debug;
 
-#[derive(Debug)]
-pub enum BufferKind {
-    File(FileBuffer),
-    Ui,
-}
-
-impl BufferKind {
-    fn name(&self) -> &str {
-        todo!()
-    }
-
-    pub fn insert_char(&mut self, line: usize, col: usize, c: char) {
-        todo!()
-    }
-
-    fn insert_word(&mut self, line: usize, col: usize, word: &str) {
-        for c in word.chars() {
-            self.insert_char(line, col, c);
-        }
-    }
-
-    fn lines(&self) -> &Vec<Vec<Cell>> {
-        todo!()
-    }
+pub trait Buffer: Debug {
+    fn execute(&mut self, cmd: Command, line: usize, col: usize) -> (usize, usize);
+    fn count_lines(&self) -> usize;
+    fn line_size(&self, line: usize) -> usize;
+    fn viewport(&self, line: usize, col: usize, size: usize) -> Vec<Vec<Cell>>;
 }

@@ -24,6 +24,11 @@ impl Cursor {
     pub fn set_line(&mut self, line: usize) {
         self.line = line;
     }
+
+    pub fn set_cursor(&mut self, line: usize, col: usize) {
+        self.set_line(line);
+        self.set_col(col);
+    }
 }
 
 impl Default for Cursor {

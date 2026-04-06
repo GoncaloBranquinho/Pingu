@@ -1,13 +1,30 @@
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    time::Duration,
+};
 
-use pingu::editor::Editor;
+use crossterm::{
+    event::{poll, read},
+    terminal::size,
+};
+use pingu::{editor::Editor, input::ModeHandler, render::Render};
 
 fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
-    let mut editor = Editor::new();
+    let (term_width, term_height) = size()?;
+    let mut editor = Editor::new(term_width as usize, term_height as usize);
     editor.initialize_terminal(&mut stdout)?;
     editor.initialize_editor()?;
-    editor.process_input(&mut stdout)?;
-    stdout.flush()?;
-    Ok(())
+    let mut renderer = Render::new(term_width as usize, term_height as usize);
+
+    loop {
+        if poll(Duration::from_millis(500))? {
+            let command = ModeHandler::handle(&mut editor, read()?);
+            editor.execute(command);
+            renderer.render(&mut editor, &mut stdout)?;
+            stdout.flush()?;
+        } else {
+            continue;
+        }
+    }
 }

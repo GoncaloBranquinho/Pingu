@@ -1,37 +1,90 @@
-use crate::core::Cursor;
+use crate::core::{Buffer, Cursor};
 
 #[derive(Debug)]
 pub struct Window {
     pub buffer_id: usize,
     pub cursor: Cursor,
-    pub line_offset: usize,
-    pub col_offset: usize,
-    pub width: u16,
-    pub height: u16,
+    pub width: usize,
+    pub height: usize,
+    pub first_line_buffer: usize,
+    pub first_line_window: usize,
     pub x: usize,
     pub y: usize,
     pub z: usize,
+    pub lines_before: Vec<usize>,
 }
 
 impl Window {
-    pub fn new(buffer_id: usize, width: u16, height: u16, x: usize, y: usize, z: usize) -> Self {
+    pub fn new(
+        buffer_id: usize,
+        width: usize,
+        height: usize,
+        x: usize,
+        y: usize,
+        z: usize,
+    ) -> Self {
         Window {
             buffer_id,
             cursor: Cursor::new(),
-            line_offset: 0,
-            col_offset: 0,
             width,
             height,
+            first_line_buffer: 0,
+            first_line_window: 0,
             x,
             y,
             z,
+            lines_before: Vec::new(),
         }
     }
 
     pub fn buffer_cursor(&self) -> (usize, usize) {
-        (
-            self.cursor.line() + self.line_offset,
-            self.cursor.col() + self.col_offset,
-        )
+        (self.cursor.line(), self.cursor.col())
+    }
+
+    pub fn window_cursor(&self) -> (usize, usize) {
+        let (buffer_line, buffer_col) = self.buffer_cursor();
+        let wrap_line = buffer_col / self.width;
+        let window_line = self.x
+            + (self.lines_before[buffer_line] - self.lines_before[self.first_line_buffer])
+            + wrap_line;
+        let window_col = self.y + (buffer_col % self.width);
+        (window_line, window_col)
+    }
+
+    pub fn get_buffer_start(&self) -> (usize, usize) {
+        let mut l = 0;
+        let mut r = self.lines_before.len() - 2;
+        while l <= r {
+            let mid = (l + r) / 2;
+            if self.lines_before[mid] <= self.first_line_window
+                && self.first_line_window < self.lines_before[mid + 1]
+            {
+                let wraps = self.first_line_window - self.lines_before[mid];
+                return (mid, wraps * self.width);
+            } else if self.first_line_window < self.lines_before[mid] {
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+        let last_line = self.lines_before.len() - 2;
+        let wrap = self.first_line_window - self.lines_before[last_line];
+        (last_line, wrap)
+    }
+
+    pub fn update_lines_before(&mut self, buffer: &dyn Buffer) {
+        self.lines_before.clear();
+        self.lines_before.push(0);
+
+        for line in 0..buffer.count_lines() {
+            let len = buffer.line_size(line);
+            let wraps = if len == 0 {
+                1
+            } else {
+                len.div_ceil(self.width)
+            };
+            let prev = *self.lines_before.last().unwrap();
+            self.lines_before.push(prev + wraps);
+        }
     }
 }
