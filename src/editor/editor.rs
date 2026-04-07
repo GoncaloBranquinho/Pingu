@@ -98,10 +98,15 @@ impl Editor {
             }
             _ => {
                 let (new_line, new_col) = buffer.execute(command, line, col);
-                window.cursor.set_cursor(new_line, new_col);
-                // if the terminal cursor goes out of bounds, update the first_line_buffer and
-                // first_line_window
                 window.update_lines_before(buffer);
+                window.update_cursor(new_line, new_col);
+                /* This is how we can print the lines
+                let (term_line, term_col) = window.window_cursor();
+                queue!(
+                    stdout,
+                    MoveTo(0, term_line as u16),
+                    Print(term_line + window.first_line_window as isize + 1)
+                ); */
             }
         }
     }

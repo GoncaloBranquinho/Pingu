@@ -45,12 +45,13 @@ impl Window {
     }
 
     // gets the current window cursor, to be displayed on the terminal
-    pub fn window_cursor(&self) -> (usize, usize) {
+    pub fn window_cursor(&self) -> (isize, usize) {
         let (buffer_line, buffer_col) = self.buffer_cursor();
         let offset = buffer_col / self.width;
-        let window_line = self.x
-            + (self.lines_before[buffer_line] - self.lines_before[self.first_line_buffer])
-            + offset;
+        let window_line = self.x as isize
+            + ((self.lines_before[buffer_line] as isize)
+                - (self.lines_before[self.first_line_buffer] as isize))
+            + offset as isize;
         let window_col = self.y + (buffer_col % self.width);
         (window_line, window_col)
     }
@@ -96,6 +97,40 @@ impl Window {
             };
             let prev = *self.lines_before.last().unwrap();
             self.lines_before.push(prev + wraps);
+        }
+    }
+
+    pub fn update_buffer_first_line(&mut self) {
+        let mut l = 0;
+        let mut r = self.lines_before.len() - 1;
+        let mut mid = (l + r) / 2;
+        while l <= r {
+            mid = (l + r) / 2;
+            if mid == self.lines_before.len() - 1 {
+                break;
+            }
+            if self.lines_before[mid] <= self.first_line_window
+                && self.first_line_window < self.lines_before[mid + 1]
+            {
+                break;
+            } else if self.first_line_window < self.lines_before[mid] {
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
+        }
+        self.first_line_buffer = mid;
+    }
+
+    pub fn update_cursor(&mut self, line: usize, col: usize) {
+        let (prev_line, _) = self.window_cursor();
+        self.cursor.set_cursor(line, col);
+        let (line, _) = self.window_cursor();
+        let upper_limit = self.x + self.height;
+        if line >= upper_limit as isize || line < self.x as isize {
+            self.first_line_window =
+                (self.first_line_window as isize + (line - prev_line)) as usize;
+            self.update_buffer_first_line();
         }
     }
 }

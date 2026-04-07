@@ -32,7 +32,10 @@ impl ModeHandler {
                 KeyCode::Esc => Command::ExitInsertMode,
                 _ => todo!(),
             },
-            _ => todo!(),
+            c => {
+                println!("{:?}", c);
+                Command::EnterInsertMode
+            }
         }
     }
 
