@@ -2,7 +2,13 @@
 pub enum Command {
     InsertChar(char),
     NewLine,
-    DeleteChar,
     ExitInsertMode,
     EnterInsertMode,
+    Reisze(u16, u16),
+    DeleteRightChar,
+    DeleteLeftChar,
+    MoveRight,
+    MoveLeft,
+    MoveDown,
+    MoveUp,
 }

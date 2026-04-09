@@ -19,6 +19,7 @@ impl ModeHandler {
                 KeyCode::Char('i') => Command::EnterInsertMode,
                 _ => todo!(),
             },
+            Event::Resize(width, height) => Command::Reisze(width, height),
             _ => todo!(),
         }
     }
@@ -28,10 +29,16 @@ impl ModeHandler {
             Event::Key(key) => match key.code {
                 KeyCode::Char(c) => Command::InsertChar(c),
                 KeyCode::Enter => Command::NewLine,
-                KeyCode::Backspace => Command::DeleteChar,
+                KeyCode::Backspace => Command::DeleteLeftChar,
+                KeyCode::Delete => Command::DeleteRightChar,
                 KeyCode::Esc => Command::ExitInsertMode,
+                KeyCode::Up => Command::MoveUp,
+                KeyCode::Down => Command::MoveDown,
+                KeyCode::Left => Command::MoveLeft,
+                KeyCode::Right => Command::MoveRight,
                 _ => todo!(),
             },
+
             c => {
                 println!("{:?}", c);
                 Command::EnterInsertMode

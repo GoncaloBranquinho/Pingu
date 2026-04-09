@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::{cmp::min, collections::HashMap};
 
 use crate::{
     commands::Command,
@@ -25,8 +25,40 @@ impl Buffer for FileBuffer {
                 // colunm based on the current block (such as a function)
                 (line + 1, 0)
             }
-
-            Command::DeleteChar => self.delete_char(line, col),
+            Command::MoveLeft => {
+                if col == 0 && line == 0 {
+                    (line, col)
+                } else if col == 0 {
+                    (line - 1, self.lines[line - 1].len())
+                } else {
+                    (line, col - 1)
+                }
+            }
+            Command::MoveRight => {
+                if col == self.lines[line].len() && line == self.lines.len() - 1 {
+                    (line, col)
+                } else if col == self.lines[line].len() {
+                    (line + 1, 0)
+                } else {
+                    (line, col + 1)
+                }
+            }
+            Command::MoveUp => {
+                if line == 0 {
+                    (line, col)
+                } else {
+                    (line - 1, min(col, self.lines[line - 1].len()))
+                }
+            }
+            Command::MoveDown => {
+                if line == self.lines.len() - 1 {
+                    (line, col)
+                } else {
+                    (line + 1, min(col, self.lines[line + 1].len()))
+                }
+            }
+            Command::DeleteLeftChar => self.delete_left_char(line, col),
+            Command::DeleteRightChar => self.delete_right_char(line, col),
             _ => todo!(),
         }
     }
@@ -84,7 +116,7 @@ impl FileBuffer {
         }
     }
 
-    fn delete_char(&mut self, line: usize, col: usize) -> (usize, usize) {
+    fn delete_left_char(&mut self, line: usize, col: usize) -> (usize, usize) {
         if col == 0 {
             if line == 0 {
                 return (0, 0);
@@ -98,6 +130,21 @@ impl FileBuffer {
         let row = self.lines.get_mut(line).unwrap();
         row.remove(col - 1);
         (line, col - 1)
+    }
+
+    fn delete_right_char(&mut self, line: usize, col: usize) -> (usize, usize) {
+        if col == self.lines[line].len() {
+            if line == self.lines.len() - 1 {
+                return (line, col);
+            }
+            let mut curr = self.lines.remove(line + 1);
+            let prev = self.lines.get_mut(line).unwrap();
+            prev.append(&mut curr);
+            return (line, col);
+        }
+        let row = self.lines.get_mut(line).unwrap();
+        row.remove(col);
+        (line, col)
     }
 
     fn insert_new_line(&mut self, line: usize, col: usize) {

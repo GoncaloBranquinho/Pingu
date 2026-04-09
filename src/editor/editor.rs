@@ -96,6 +96,22 @@ impl Editor {
                 self.mode = Mode::Insert;
                 let _ = queue!(stdout, SetCursorStyle::SteadyBar);
             }
+
+            Command::Reisze(width, height) => {
+                // for each window, not necessarly active, update the state internally
+                // consider using ratios
+                // resize all the active windows
+                todo!()
+            }
+
+            Command::MoveUp | Command::MoveDown | Command::MoveLeft | Command::MoveRight => {
+                let (new_line, new_col) = buffer.execute(command, line, col);
+                window.update_cursor(new_line, new_col);
+            }
+            Command::DeleteRightChar => {
+                let (_, _) = buffer.execute(command, line, col);
+                window.update_lines_before(buffer);
+            }
             _ => {
                 let (new_line, new_col) = buffer.execute(command, line, col);
                 window.update_lines_before(buffer);
