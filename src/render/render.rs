@@ -1,11 +1,16 @@
-use crossterm::{cursor::MoveTo, queue, style::Print};
+use crossterm::{
+    cursor::MoveTo,
+    execute, queue,
+    style::Print,
+    terminal::{Clear, ClearType},
+};
 
 use crate::{core::Cell, editor::Editor};
-use std::io::{self, Stdout};
+use std::io::{self, Stdout, Write};
 
 #[derive(Debug)]
 pub struct Render {
-    old_screen: Vec<Vec<Cell>>,
+    pub old_screen: Vec<Vec<Cell>>,
 }
 
 impl Render {
@@ -39,13 +44,22 @@ impl Render {
                 j = window.y;
             }
         }
-        (0..self.old_screen.len()).for_each(|i| {
-            (0..self.old_screen[i].len()).for_each(|j| {
+
+        if self.old_screen.len() != new_screen.len()
+            || self.old_screen[0].len() != new_screen[0].len()
+        {
+            execute!(stdout, Clear(ClearType::All))?;
+            self.old_screen = vec![vec![Cell::new('\0'); new_screen[0].len()]; new_screen.len()];
+        }
+
+        (0..new_screen.len()).for_each(|i| {
+            (0..new_screen[i].len()).for_each(|j| {
                 if self.old_screen[i][j] != new_screen[i][j] {
                     let _ = queue!(stdout, MoveTo(j as u16, i as u16), Print(new_screen[i][j]));
                 }
             });
         });
+
         self.old_screen = new_screen;
 
         let active_window = editor.get_window(editor.current_window);

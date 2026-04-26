@@ -11,17 +11,18 @@ use crossterm::event::{
     EnableFocusChange, EnableMouseCapture,
 };
 use crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    EnterAlternateScreen, LeaveAlternateScreen, SetSize, disable_raw_mode, enable_raw_mode,
 };
 use crossterm::{execute, queue};
 
 use crate::commands::Command;
-use crate::core::{Buffer, FileBuffer, Mode, Window};
+use crate::core::{Buffer, FileBuffer, Mode, Window, window};
 
 #[derive(Debug)]
 pub struct Editor {
     pub buffers: HashMap<usize, Box<dyn Buffer>>,
     pub windows: HashMap<usize, Window>,
+    //pub str_to_id: HashMap<String, usize>,
     pub active_windows: Vec<usize>,
     pub current_window: usize,
     pub mode: Mode,
@@ -97,11 +98,17 @@ impl Editor {
                 let _ = queue!(stdout, SetCursorStyle::SteadyBar);
             }
 
-            Command::Reisze(width, height) => {
-                // for each window, not necessarly active, update the state internally
-                // consider using ratios
-                // resize all the active windows
-                todo!()
+            Command::Resize(width, height) => {
+                let _ = queue!(stdout, SetSize(width, height));
+                self.term_width = width as usize;
+                self.term_height = height as usize;
+                self.distribute_sizes(width, height);
+                let window_ids: Vec<usize> = self.windows.keys().copied().collect();
+                for window_id in window_ids {
+                    let (aux_buffer, aux_window) = self.get_pair(window_id);
+                    aux_window.update_lines_before(aux_buffer);
+                    aux_window.update_cursor(line, col);
+                }
             }
 
             Command::MoveUp | Command::MoveDown | Command::MoveLeft | Command::MoveRight => {
@@ -124,6 +131,18 @@ impl Editor {
                     Print(term_line + window.first_line_window as isize + 1)
                 ); */
             }
+        }
+    }
+
+    pub fn distribute_sizes(&mut self, width: u16, height: u16) {
+        let window_ids: Vec<usize> = self.windows.keys().copied().collect();
+        for window_id in window_ids {
+            let (buffer, window) = self.get_pair(window_id);
+            window.height = height as usize;
+            window.width = width as usize;
+            window.update_lines_before(buffer);
+            let (line, col) = window.buffer_cursor();
+            window.update_cursor(line, col);
         }
     }
 }

@@ -4,7 +4,7 @@ pub enum Command {
     NewLine,
     ExitInsertMode,
     EnterInsertMode,
-    Reisze(u16, u16),
+    Resize(u16, u16),
     DeleteRightChar,
     DeleteLeftChar,
     MoveRight,
